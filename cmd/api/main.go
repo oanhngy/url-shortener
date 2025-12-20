@@ -24,6 +24,7 @@ func main() {
 		}
 		if r.Method == http.MethodGet { //GET
 			h.ListLinks(w, r)
+			return
 		}
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed) //405
 	})

@@ -31,7 +31,7 @@ func (h *LinkHandler) CreateLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	type reqBody struct {
-		LongURL string `json:"long_url"`
+		LongURL string `json:"longUrl"`
 	}
 
 	var req reqBody
