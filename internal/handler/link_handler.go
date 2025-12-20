@@ -23,6 +23,7 @@ func NewLinkHandler(svc *service.LinkService, baseURL string) *LinkHandler {
 	}
 }
 
+// **CREATE LINK
 // xu ly POST, shorten
 func (h *LinkHandler) CreateLink(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -65,6 +66,114 @@ func (h *LinkHandler) CreateLink(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusCreated, resp) //201
+}
+
+// **LIST LINKS
+func (h *LinkHandler) ListLinks(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowd", http.StatusMethodNotAllowed)
+		return
+	}
+
+	links, err := h.svc.ViewAllLinks()
+	if err != nil {
+		http.Error(w, "Failed to list links", http.StatusInternalServerError)
+		return
+	}
+
+	//item cho từng link
+	type item struct {
+		ID         string `json:"id"`
+		LongURL    string `json:"longUrl"`
+		ShortCode  string `json:"shortCode"`
+		ShortURL   string `json:"shortUrl"`
+		ClickCount int    `json:"clicks"`
+		CreatedAt  string `json:"createdAt"`
+	}
+
+	out := make([]item, 0, len(links)) //slice
+	for _, l := range links {
+		out = append(out, item{
+			ID:         l.ID,
+			LongURL:    l.LongURL,
+			ShortCode:  l.ShortCode,
+			ShortURL:   strings.TrimRight(h.baseURL, "/") + "/" + l.ShortCode,
+			ClickCount: l.ClickCount,
+			CreatedAt:  l.CreatedAt.Format(time.RFC3339),
+		})
+	}
+	writeJSON(w, http.StatusOK, out) //200
+}
+
+// **VIEW INFO
+func (h *LinkHandler) ViewInfo(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	//lấy code từ /api/v1/links/{code}
+	code := strings.TrimPrefix(r.URL.Path, "/api/v1/links/") //tách
+	if code == "" || strings.Contains(code, "/") {
+		http.NotFound(w, r) //404
+		return
+	}
+
+	//gọi service
+	link, err := h.svc.ViewInfo(code)
+	if err != nil {
+		http.NotFound(w, r) //404
+		return
+	}
+
+	type respBody struct {
+		ID         string `json:"id"`
+		LongURL    string `json:"longUrl"`
+		ShortCode  string `json:"shortCode"`
+		ShortURL   string `json:"shortUrl"`
+		ClickCount int    `json:"clicks"`
+		CreatedAt  string `json:"createdAt"`
+	}
+
+	resp := respBody{
+		ID:         link.ID,
+		LongURL:    link.LongURL,
+		ShortCode:  link.ShortCode,
+		ShortURL:   strings.TrimRight(h.baseURL, "/") + "/" + link.ShortCode,
+		ClickCount: link.ClickCount,
+		CreatedAt:  link.CreatedAt.Format(time.RFC3339),
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// **REDIRECT
+func (h *LinkHandler) Redirect(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	//lấy code từ /{code}
+	code := strings.TrimPrefix(r.URL.Path, "/") //tách
+	if code == "" {
+		http.NotFound(w, r)
+		return
+	}
+
+	if strings.HasPrefix(code, "api") {
+		http.NotFound(w, r)
+		return
+	}
+
+	//tìm url+tăng click
+	longURL, err := h.svc.ReturnOriginalURL(code)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	http.Redirect(w, r, longURL, http.StatusFound) //302
+
 }
 
 // helper function

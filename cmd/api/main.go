@@ -10,34 +10,35 @@ import (
 )
 
 func main() {
-	repo := memory.NewInMemoryRepo() //repo
+	repo := memory.NewInMemoryRepo()    //repo
 	svc := service.NewLinkService(repo) //service
 	baseURL := "http://localhost:8080"
 	h := handler.NewLinkHandler(svc, baseURL) //handler
-	mux := http.NewServeMux() //tạo router
+	mux := http.NewServeMux()                 //tạo router
 
 	//endpoint tạo link +link list
-	mux.HandleFunc("api/v1/links", func(w http.ResponseWriter, r *http.Request)) {
+	mux.HandleFunc("/api/v1/links", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost { //POST
 			h.CreateLink(w, r)
 			return
-		} else if r.Method == http.MethodGet { //GET
+		}
+		if r.Method == http.MethodGet { //GET
 			h.ListLinks(w, r)
-	}
-	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed) //405
+		}
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed) //405
+	})
 
 	//endpoint view info
-	mux.HandleFunc("api/v1/links", h.ViewInfo) //GET
-	
+	mux.HandleFunc("/api/v1/links/", h.ViewInfo) //GET
+
 	//endpoint redirect
 	mux.HandleFunc("/", h.Redirect) //GET
 
-	addr:= ":8080"
+	addr := ":8080"
 	log.Printf("Starting server at %s\n", addr)
 
 	//start server
-	if err:=http.ListenAndServe(addr, mux); err != nil {
+	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatal(err)
 	}
-
 }
