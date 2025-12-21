@@ -57,7 +57,7 @@ use urlshortener
 db.links.find()
 
 
-THIẾT KẾ & QUYẾT ĐỊNH KỸ THUẬT
+# THIẾT KẾ & QUYẾT ĐỊNH KỸ THUẬT
 - Database chọn MongoDB vì: 
     - Phù hợp với dữ liệu: chỉ cần lưu mapping short-long code và click count, không cần join, transaction phức tạp
     - Dễ scale: MongoDB phù hợp kiểu nhiều read/write đơn giản, dễ scale khi traffic tăng
@@ -76,12 +76,12 @@ THIẾT KẾ & QUYẾT ĐỊNH KỸ THUẬT
     - DB có unique index short_code
     - Bị duplicate --> generate lại + retry
 
-TRADE-OFFS
+# TRADE-OFFS
 - chọn Random Base 62 thay vì count-based vì không cần global counter, tránh được bottleneck khi scale; phù hợp với hệ thống phân tán; Đổi lại có khả năng bị collision (đã xử lý) và phụ thuộc vào unique index
 - Chọn MongoDB (nonSQL) thay vì SQL lý do: mô hình key-value đơn giản, dễ xử lý unique index + retry cho collision; đổi lại MongoDB không có acid properties như SQL, không phù hợp nếu cần query phức tạp sau này
 - net/http + ServeMux thay vì Gin/Fiber: dễ đọc và debug, code minh bạch; đổi lại không có sẵn middleware, binding, validation
 
-CHALLENGES
+# CHALLENGES
 - Gặp vấn đề gì?
     - Công nghệ mới: mất thời gian làm quen syntax, tolling và cách wiring --> test in-memory trước, thay bằng MongoDB, test từng phần
     - Vấn đề collision/concurrency: random không là chưa đủ --> phải đảm bảo unique constraint (unique index MongoDB), thêm Exists()
@@ -92,7 +92,7 @@ CHALLENGES
     - Vai trò của từng layer
 
 
-LIMITATIONS & IMPROVEMENTS
+# LIMITATIONS & IMPROVEMENTS
 - Code hiện tại còn thiếu gì?
     - Phần testing ít: chỉ mới unit cho core service, chưa test với MongoDB và HTTP handlers
     - Chưa validate đầy đủ input URL
@@ -111,7 +111,7 @@ LIMITATIONS & IMPROVEMENTS
     - CI/CD pipeline
     - Horizontal scaling
 
-Trả lời các vấn đề
+# Trả lời các vấn đề
 - concurrency: 2 requests cùng lúc tạo link với cùng URL thì sao?
     - Mỗi request generate short code độc lập
     - MongoDB có unique index trên short_code đảm bảo không có 2 record trùng
